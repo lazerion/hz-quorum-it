@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<hazelcast
+        xsi:schemaLocation="http://www.hazelcast.com/schema/config http://www.hazelcast.com/schema/config/hazelcast-config-3.10.xsd"
+        xmlns="http://www.hazelcast.com/schema/config"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+
+    <group>
+        <name>hz-quorum</name>
+        <password>s3crEt</password>
+    </group>
+
+    <properties>
+        <property name="hazelcast.icmp.enabled">true</property>
+        <property name="hazelcast.icmp.timeout">100</property>
+        <property name="hazelcast.icmp.interval">1000</property>
+        <property name="hazelcast.icmp.ttl">255</property>
+        <property name="hazelcast.icmp.max.attempts">2</property>
+        <property name="hazelcast.icmp.echo.fail.fast.on.startup">true</property>
+        <!--<property name="hazelcast.merge.next.run.delay.seconds">30</property>-->
+        <!--<property name="hazelcast.merge.first.run.delay.seconds">60</property>-->
+        <!-- default is 5000 ms -->
+        <!--<property name="hazelcast.operation.backup.timeout.millis">1000</property>-->
+    </properties>
+
+    <quorum name="q3" enabled="true">
+        <quorum-size>3</quorum-size>
+    </quorum>
+
+    <list name="default">
+        <quorum-ref>q3</quorum-ref>
+        <backup-count>2</backup-count>
+    </list>
+
+</hazelcast>
