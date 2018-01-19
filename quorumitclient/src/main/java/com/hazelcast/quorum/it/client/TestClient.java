@@ -6,13 +6,10 @@ import com.hazelcast.client.HazelcastClient;
 import com.hazelcast.client.config.ClientConfig;
 import com.hazelcast.client.config.XmlClientConfigBuilder;
 import com.hazelcast.core.HazelcastInstance;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import static spark.Spark.get;
 
 public class TestClient {
-    private static Logger logger = LoggerFactory.getLogger(TestClient.class);
     private static HazelcastInstance client;
     private static Nanny nanny = new Nanny();
 
@@ -36,16 +33,11 @@ public class TestClient {
     }
 
     private static Boolean sanity(String count) {
-        logger.info("Cluster size {}", client.getCluster().getMembers().size());
         return client.getCluster().getMembers().size() == Integer.parseInt(count);
     }
 
     private static void startClient() throws InterruptedException {
         ClientConfig clientConfig = new XmlClientConfigBuilder().build();
-
-        logger.info("Group {}", clientConfig.getGroupConfig().getName());
-        logger.info("Password {}", clientConfig.getGroupConfig().getPassword());
-
         client = HazelcastClient.newHazelcastClient(clientConfig);
     }
 }

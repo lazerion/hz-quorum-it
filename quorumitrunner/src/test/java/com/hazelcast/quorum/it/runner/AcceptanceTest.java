@@ -133,4 +133,38 @@ public class AcceptanceTest {
             }
         });
     }
+
+    @Test
+    public void noQuorumExceptionWhenOwnerGoesOffInSmallerBrain() throws IOException, InterruptedException {
+        final int initialClusterSize = 5;
+        final int expectedClusterSize = 3;
+
+        cli.up("deployment-1.yaml").scale("hazelcast", initialClusterSize);
+        ClientContainer client = new ClientContainer();
+
+        with().pollInterval(1, SECONDS).await().atMost(60, SECONDS)
+                .untilAsserted(() -> assertTrue(client.sanity(initialClusterSize)));
+
+        with().pollInterval(1, SECONDS).await().atMost(5, SECONDS)
+                .untilAsserted(() -> assertTrue(client.run()));
+
+        DefaultExecuteResultHandler resultHandler = new DefaultExecuteResultHandler();
+        cli.networkDelay(".*hazelcast[_]{1}[1,3]{1}.*", resultHandler);
+
+        with().pollInterval(1, SECONDS).await().atMost(60, SECONDS)
+                .untilAsserted(() -> assertTrue(client.sanity(expectedClusterSize)));
+
+        resultHandler.waitFor();
+        assertTrue(resultHandler.getExitValue() == 0);
+
+        with().pollInterval(1, TimeUnit.SECONDS).await().atMost(5, SECONDS)
+                .untilAsserted(() -> assertNotNull(client.stop()));
+
+        QuorumStatistics statistics = client.stop();
+
+        logger.info("Statistics {}", statistics);
+        assertTrue(statistics.getFailures() == 0);
+        assertTrue(statistics.getExceptions() != 0);
+        assertTrue(statistics.getSuccess() == 0);
+    }
 }
