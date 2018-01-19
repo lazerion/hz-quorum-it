@@ -39,40 +39,95 @@ public class AcceptanceTest {
         }
     }
 
+    /**
+     * This is a verification case after brains split and cluster size verified is equal to
+     * quorum size
+     * Current cluster size wait is at most 60 secs
+     */
     @Test
-    public void NoQuorumExceptionWhenHealthyClusterSizeIsEqualQuorum() throws IOException, InterruptedException {
+    public void noQuorumExceptionWhenClientConnectedToSufficientQuorum() throws IOException, InterruptedException {
         final int initialClusterSize = 5;
         final int expectedClusterSize = 3;
+        final int range = 3;
 
         cli.up("deployment-1.yaml").scale("hazelcast", initialClusterSize);
         ClientContainer client = new ClientContainer();
 
-        with().pollInterval(1, SECONDS).await().atMost(20, SECONDS)
-                .untilAsserted(() -> assertTrue(client.sanity(initialClusterSize)));
-
-        IntStream.range(0, 3).forEach(it -> {
+        IntStream.range(0, range).forEach(it -> {
             try {
+                with().pollInterval(1, SECONDS).await().atMost(60, SECONDS)
+                        .untilAsserted(() -> assertTrue(client.sanity(initialClusterSize)));
+
                 with().pollInterval(1, SECONDS).await().atMost(5, SECONDS)
                         .untilAsserted(() -> assertTrue(client.run()));
 
                 DefaultExecuteResultHandler resultHandler = new DefaultExecuteResultHandler();
                 cli.networkDelay(".*hazelcast[_]{1}[4,5]{1}.*", resultHandler);
 
-                with().pollInterval(1, SECONDS).await().atMost(20, SECONDS)
+                with().pollInterval(1, SECONDS).await().atMost(60, SECONDS)
                         .untilAsserted(() -> assertTrue(client.sanity(expectedClusterSize)));
 
                 resultHandler.waitFor();
                 assertTrue(resultHandler.getExitValue() == 0);
 
-                with().pollInterval(1, TimeUnit.SECONDS).await().atMost(20, SECONDS)
+                with().pollInterval(1, TimeUnit.SECONDS).await().atMost(5, SECONDS)
                         .untilAsserted(() -> assertNotNull(client.stop()));
 
                 QuorumStatistics statistics = client.stop();
 
+                logger.info("Statistics {}", statistics);
                 assertTrue(statistics.getFailures() == 0);
                 assertTrue(statistics.getExceptions() == 0);
                 assertTrue(statistics.getSuccess() > 0);
-            }catch (Exception e) {
+            } catch (Exception e) {
+                logger.error(e.getMessage());
+                throw new RuntimeException(e);
+            }
+        });
+    }
+
+    /**
+     * This is a verification case after brains split and cluster size verified under
+     * quorum size
+     *
+     * Current cluster size wait is at most 60 secs
+     */
+    @Test
+    public void quorumExceptionWhenClientConnectedToUnderQuorumBrain() throws IOException {
+        final int initialClusterSize = 5;
+        final int expectedClusterSize = 2;
+        final int range = 3;
+
+        cli.up("deployment-1.yaml").scale("hazelcast", initialClusterSize);
+        ClientContainer client = new ClientContainer();
+
+        IntStream.range(0, range).forEach(it -> {
+            try {
+                with().pollInterval(1, SECONDS).await().atMost(60, SECONDS)
+                        .untilAsserted(() -> assertTrue(client.sanity(initialClusterSize)));
+
+                DefaultExecuteResultHandler resultHandler = new DefaultExecuteResultHandler();
+                cli.networkDelay(".*hazelcast[_]{1}[1,2,3]{1}.*", resultHandler);
+
+                with().pollInterval(1, SECONDS).await().atMost(60, SECONDS)
+                        .untilAsserted(() -> assertTrue(client.sanity(expectedClusterSize)));
+
+                with().pollInterval(1, SECONDS).await().atMost(5, SECONDS)
+                        .untilAsserted(() -> assertTrue(client.run()));
+
+                resultHandler.waitFor();
+                assertTrue(resultHandler.getExitValue() == 0);
+
+                with().pollInterval(1, TimeUnit.SECONDS).await().atMost(5, SECONDS)
+                        .untilAsserted(() -> assertNotNull(client.stop()));
+
+                QuorumStatistics statistics = client.stop();
+
+                logger.info("Statistics {}", statistics);
+                assertTrue(statistics.getFailures() == 0);
+                assertTrue(statistics.getExceptions() != 0);
+                assertTrue(statistics.getSuccess() == 0);
+            } catch (Exception e) {
                 logger.error(e.getMessage());
                 throw new RuntimeException(e);
             }

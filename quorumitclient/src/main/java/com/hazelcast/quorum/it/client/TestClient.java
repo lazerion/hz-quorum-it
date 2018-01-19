@@ -9,10 +9,6 @@ import com.hazelcast.core.HazelcastInstance;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.concurrent.TimeUnit;
-
-import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.awaitility.Awaitility.with;
 import static spark.Spark.get;
 
 public class TestClient {
@@ -35,14 +31,13 @@ public class TestClient {
         return nanny.stop();
     }
 
-    private static String run() {
+    private static Boolean run() {
         return nanny.runOn(client);
     }
 
     private static Boolean sanity(String count) {
-        with().pollInterval(1, TimeUnit.SECONDS).await().atMost(20, SECONDS)
-                .until(() -> client.getCluster().getMembers().size() == Integer.parseInt(count));
-        return true;
+        logger.info("Cluster size {}", client.getCluster().getMembers().size());
+        return client.getCluster().getMembers().size() == Integer.parseInt(count);
     }
 
     private static void startClient() throws InterruptedException {

@@ -34,7 +34,7 @@ public class ClientContainer {
                 logger.error("error {}", response.message());
                 return false;
             }
-            return true;
+            return Boolean.valueOf(response.body().string());
         } catch (Exception ex) {
             return false;
         }

@@ -25,7 +25,7 @@ class Nanny {
         this.futures = new LinkedList<>();
     }
 
-    String runOn(HazelcastInstance client) {
+    Boolean runOn(HazelcastInstance client) {
         final IList<String> list = client.getList("default");
         Callable<Void> task = () -> {
             while (true) {
@@ -48,8 +48,7 @@ class Nanny {
                 }
             }
         };
-        futures.add(executorService.submit(task));
-        return "executor service started";
+        return futures.add(executorService.submit(task));
     }
 
     QuorumStatistics stop() {

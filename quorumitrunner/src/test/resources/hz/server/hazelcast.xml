@@ -16,10 +16,10 @@
         <property name="hazelcast.icmp.ttl">255</property>
         <property name="hazelcast.icmp.max.attempts">2</property>
         <property name="hazelcast.icmp.echo.fail.fast.on.startup">true</property>
-        <!--<property name="hazelcast.merge.next.run.delay.seconds">30</property>-->
-        <!--<property name="hazelcast.merge.first.run.delay.seconds">60</property>-->
+        <property name="hazelcast.merge.next.run.delay.seconds">10</property>
+        <property name="hazelcast.merge.first.run.delay.seconds">20</property>
         <!-- default is 5000 ms -->
-        <!--<property name="hazelcast.operation.backup.timeout.millis">1000</property>-->
+        <property name="hazelcast.operation.backup.timeout.millis">1000</property>
     </properties>
 
     <quorum name="q3" enabled="true">
