@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<hazelcast-client
+        xsi:schemaLocation="http://www.hazelcast.com/schema/client-config http://www.hazelcast.com/schema/client-config/hazelcast-client-config-3.10.xsd"
+        xmlns="http://www.hazelcast.com/schema/client-config"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <group>
+        <name>hz-quorum</name>
+        <password>s3crEt</password>
+    </group>
+    <network>
+        <icmp-ping enabled="true">
+            <timeout-milliseconds>100</timeout-milliseconds>
+            <interval-milliseconds>1000</interval-milliseconds>
+            <ttl>255</ttl>
+            <max-attempts>2</max-attempts>
+            <echo-fail-fast-on-startup>true</echo-fail-fast-on-startup>
+        </icmp-ping>
+        <cluster-members>
+            <address>hz-3</address>
+            <address>hz-4</address>
+        </cluster-members>
+        <socket-options>
+            <linger-seconds>0</linger-seconds>
+        </socket-options>
+    </network>
+</hazelcast-client>

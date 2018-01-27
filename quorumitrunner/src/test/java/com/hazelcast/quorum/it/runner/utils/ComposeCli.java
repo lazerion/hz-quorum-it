@@ -3,8 +3,10 @@ package com.hazelcast.quorum.it.runner.utils;
 import org.apache.commons.exec.CommandLine;
 import org.apache.commons.exec.DefaultExecuteResultHandler;
 import org.apache.commons.exec.DefaultExecutor;
+import org.apache.commons.exec.PumpStreamHandler;
 import org.apache.commons.lang3.StringUtils;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
@@ -62,6 +64,21 @@ public class ComposeCli {
         CommandLine cmdLine = CommandLine.parse(line);
         DefaultExecutor executor = new DefaultExecutor();
         executor.execute(cmdLine, resultHandler);
+        return this;
+    }
+
+    public ComposeCli networkDisconnect(String network, String container) throws IOException {
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        String line = String.format("docker network ls --format {{.Name}} --filter name=%s", network);
+        DefaultExecutor exec = new DefaultExecutor();
+        PumpStreamHandler streamHandler = new PumpStreamHandler(outputStream);
+        exec.setStreamHandler(streamHandler);
+        exec.execute(CommandLine.parse(line));
+
+        String networkName = outputStream.toString();
+        line = String.format("docker network disconnect %s %s", networkName, container);
+        int status = exec.execute(CommandLine.parse(line));
+        assertTrue(status == 0);
         return this;
     }
 }

@@ -1,0 +1,89 @@
+version: '2.1'
+networks:
+  shared:
+    driver: bridge
+  dc1:
+    driver: bridge
+  dc2:
+    driver: bridge
+services:
+# DC 2 client
+  hazelcast-client:
+      image: client:quorum
+      container_name: client
+      depends_on:
+        - hz-3
+      volumes:
+        - ./hz/client:/configFolder
+      environment:
+        - JAVA_OPTS=-Dhazelcast.client.config=/configFolder/hz-unsafe.xml
+      links:
+        - "hz-3:hz-3"
+        - "hz-4:hz-4"
+      ports:
+        - "5701"
+        - "4567:4567"
+      networks:
+        - shared
+# DC 1 members
+  hz-0:
+    image: hz:quorum
+    container_name: hz-0
+    volumes:
+      - ./hz/server:/configFolder
+    environment:
+      - JAVA_OPTS=-Dhazelcast.config=/configFolder/hazelcast.xml
+    ports:
+      - "5701"
+    networks:
+      - shared
+      - dc1
+  hz-1:
+    image: hz:quorum
+    container_name: hz-1
+    volumes:
+      - ./hz/server:/configFolder
+    environment:
+      - JAVA_OPTS=-Dhazelcast.config=/configFolder/hazelcast.xml
+    ports:
+      - "5701"
+    networks:
+      - shared
+      - dc1
+  hz-2:
+    image: hz:quorum
+    container_name: hz-2
+    volumes:
+      - ./hz/server:/configFolder
+    environment:
+      - JAVA_OPTS=-Dhazelcast.config=/configFolder/hazelcast.xml
+    ports:
+      - "5701"
+    networks:
+      - shared
+      - dc1
+# DC 2 members
+  hz-3:
+    image: hz:quorum
+    container_name: hz-3
+    volumes:
+      - ./hz/server:/configFolder
+    environment:
+      - JAVA_OPTS=-Dhazelcast.config=/configFolder/hazelcast.xml
+    ports:
+      - "5701"
+    networks:
+      - shared
+      - dc2
+  hz-4:
+    image: hz:quorum
+    container_name: hz-4
+    volumes:
+      - ./hz/server:/configFolder
+    environment:
+      - JAVA_OPTS=-Dhazelcast.config=/configFolder/hazelcast.xml
+    ports:
+      - "5701"
+    networks:
+      - shared
+      - dc2

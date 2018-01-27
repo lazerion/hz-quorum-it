@@ -89,7 +89,7 @@ public class AcceptanceTest {
     /**
      * This is a verification case after brains split and cluster size verified under
      * quorum size
-     *
+     * <p>
      * Current cluster size wait is at most 60 secs
      */
     @Test
@@ -158,6 +158,69 @@ public class AcceptanceTest {
         assertTrue(resultHandler.getExitValue() == 0);
 
         with().pollInterval(1, TimeUnit.SECONDS).await().atMost(5, SECONDS)
+                .untilAsserted(() -> assertNotNull(client.stop()));
+
+        QuorumStatistics statistics = client.stop();
+
+        logger.info("Statistics {}", statistics);
+        assertTrue(statistics.getFailures() == 0);
+        assertTrue(statistics.getExceptions() != 0);
+        assertTrue(statistics.getSuccess() == 0);
+    }
+
+    @Test
+    public void noQuorumExceptionWhenMembersNetworkRemoved() throws IOException {
+        final int initialClusterSize = 5;
+        final int expectedHealthySize = 3;
+
+        cli.up("deployment-2.yaml");
+        ClientContainer client = new ClientContainer();
+
+        with().pollInterval(1, SECONDS).await().atMost(20, SECONDS)
+                .untilAsserted(() -> assertTrue(client.sanity(initialClusterSize)));
+
+        with().pollInterval(1, SECONDS).await().atMost(5, SECONDS)
+                .untilAsserted(() -> assertTrue(client.run()));
+
+        cli.networkDisconnect("shared", "hz-3");
+        cli.networkDisconnect("shared", "hz-4");
+
+        with().pollDelay(5, SECONDS).pollInterval(1, SECONDS).await().atMost(20, SECONDS)
+                .untilAsserted(() -> assertTrue(client.sanity(expectedHealthySize)));
+
+        with().pollInterval(1, TimeUnit.SECONDS).await().atMost(5, SECONDS)
+                .untilAsserted(() -> assertNotNull(client.stop()));
+
+        QuorumStatistics statistics = client.stop();
+
+        logger.info("Statistics {}", statistics);
+        assertTrue(statistics.getFailures() == 0);
+        assertTrue(statistics.getExceptions() == 0);
+        assertTrue(statistics.getSuccess() > 0);
+    }
+
+    @Test
+    public void quorumExceptionWhenMembersNetworkRemoved() throws IOException {
+        final int initialClusterSize = 5;
+        final int expectedUnhealthySize = 2;
+
+        cli.up("deployment-3.yaml");
+        ClientContainer client = new ClientContainer();
+
+        with().pollInterval(1, SECONDS).await().atMost(20, SECONDS)
+                .untilAsserted(() -> assertTrue(client.sanity(initialClusterSize)));
+
+        cli.networkDisconnect("shared", "hz-0");
+        cli.networkDisconnect("shared", "hz-1");
+        cli.networkDisconnect("shared", "hz-2");
+
+        with().pollInterval(1, SECONDS).await().atMost(20, SECONDS)
+                .untilAsserted(() -> assertTrue(client.sanity(expectedUnhealthySize)));
+
+        with().pollInterval(1, SECONDS).await().atMost(5, SECONDS)
+                .untilAsserted(() -> assertTrue(client.run()));
+
+        with().pollDelay(5, SECONDS).pollInterval(1, TimeUnit.SECONDS).await().atMost(10, SECONDS)
                 .untilAsserted(() -> assertNotNull(client.stop()));
 
         QuorumStatistics statistics = client.stop();
