@@ -78,6 +78,7 @@ public class AcceptanceTest {
                 logger.info("Statistics {}", statistics);
                 assertTrue(statistics.getFailures() == 0);
                 assertTrue(statistics.getExceptions() == 0);
+                assertTrue(statistics.getQuorumExceptions() == 0);
                 assertTrue(statistics.getSuccess() > 0);
             } catch (Exception e) {
                 logger.error(e.getMessage());

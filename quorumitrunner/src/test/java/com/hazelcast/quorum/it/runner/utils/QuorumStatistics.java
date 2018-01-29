@@ -13,4 +13,6 @@ public class QuorumStatistics {
     private Integer failures;
     @SerializedName("exceptions")
     private Integer exceptions;
+    @SerializedName("quorumExceptions")
+    private Integer quorumExceptions;
 }

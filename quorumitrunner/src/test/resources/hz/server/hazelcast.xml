@@ -31,4 +31,35 @@
         <backup-count>2</backup-count>
     </list>
 
+    <set name="default">
+        <quorum-ref>q3</quorum-ref>
+        <backup-count>2</backup-count>
+    </set>
+
+    <semaphore name="default">
+        <quorum-ref>q3</quorum-ref>
+        <backup-count>2</backup-count>
+    </semaphore>
+
+    <atomic-long name="default">
+        <quorum-ref>q3</quorum-ref>
+    </atomic-long>
+
+    <atomic-reference name="default">
+        <quorum-ref>q3</quorum-ref>
+    </atomic-reference>
+
+    <cardinality-estimator name="default">
+        <quorum-ref>q3</quorum-ref>
+        <backup-count>2</backup-count>
+    </cardinality-estimator>
+
+    <ringbuffer name="default">
+        <quorum-ref>q3</quorum-ref>
+        <backup-count>2</backup-count>
+    </ringbuffer>
+
+    <replicatedmap name="default">
+        <quorum-ref>q3</quorum-ref>
+    </replicatedmap>
 </hazelcast>

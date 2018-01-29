@@ -13,4 +13,6 @@ class QuorumStatistics {
     private AtomicInteger failures = new AtomicInteger(0);
     @SerializedName("exceptions")
     private AtomicInteger exceptions = new AtomicInteger(0);
+    @SerializedName("quorumExceptions")
+    private AtomicInteger quorumExceptions = new AtomicInteger(0);
 }
