@@ -6,10 +6,16 @@ import org.apache.commons.exec.DefaultExecutor;
 import org.apache.commons.exec.PumpStreamHandler;
 import org.apache.commons.lang3.StringUtils;
 
+import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 
 import static org.junit.Assert.assertTrue;
 
@@ -60,7 +66,7 @@ public class ComposeCli {
 
     public ComposeCli networkDelay(String re2, DefaultExecuteResultHandler resultHandler) throws IOException {
         //requires pumba
-        String line = String.format("pumba netem --tc-image gaiadocker/iproute2 --duration 30s delay --time 5000 re2:%s", re2);
+        String line = String.format("pumba netem --tc-image gaiadocker/iproute2 --duration 60s delay --time 5000 re2:%s", re2);
         CommandLine cmdLine = CommandLine.parse(line);
         DefaultExecutor executor = new DefaultExecutor();
         executor.execute(cmdLine, resultHandler);
@@ -80,5 +86,41 @@ public class ComposeCli {
         int status = exec.execute(CommandLine.parse(line));
         assertTrue(status == 0);
         return this;
+    }
+
+    public void logs(){
+        String line = String.format("docker-compose -f %s ps -q", project.getAbsoluteFile());
+        DefaultExecutor executor = new DefaultExecutor();
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        PumpStreamHandler streamHandler = new PumpStreamHandler(outputStream);
+        executor.setStreamHandler(streamHandler);
+
+        try {
+            executor.execute(CommandLine.parse(line));
+        } catch (IOException e) {
+            System.err.println(e.getMessage());
+            return;
+        }
+
+        String[] ids = outputStream.toString().split("[\\r\\n]+");
+        for (String id : ids) {
+            line = String.format("docker logs -t %s", id);
+            Path path =
+                    Paths.get(id.substring(0, 8) +
+                            "-" +
+                            Instant.now().truncatedTo(ChronoUnit.MINUTES).toString().replace("-", "").replace(":", "") +
+                            ".txt");
+            try (BufferedWriter writer = Files.newBufferedWriter(path)) {
+                outputStream = new ByteArrayOutputStream();
+                streamHandler = new PumpStreamHandler(outputStream);
+                executor.setStreamHandler(streamHandler);
+                executor.execute(CommandLine.parse(line));
+
+                writer.write(outputStream.toString());
+                writer.flush();
+            } catch (IOException ignored) {
+                System.err.println(ignored.getMessage());
+            }
+        }
     }
 }

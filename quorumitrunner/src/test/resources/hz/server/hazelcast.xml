@@ -62,4 +62,13 @@
     <replicatedmap name="default">
         <quorum-ref>q3</quorum-ref>
     </replicatedmap>
+
+    <count-down-latch name="default">
+        <quorum-ref>q3</quorum-ref>
+    </count-down-latch>
+
+    <multimap name="default">
+        <quorum-ref>q3</quorum-ref>
+        <backup-count>2</backup-count>
+    </multimap>
 </hazelcast>

@@ -1,0 +1,25 @@
+version: '2'
+services:
+  hazelcast-client:
+    image: client:quorum
+    container_name: client
+    depends_on:
+        - hazelcast
+    volumes:
+        - ./hz/client:/configFolder
+    environment:
+        - JAVA_OPTS=-Dhazelcast.client.config=/configFolder/hazelcast-redo-disabled-client.xml
+    links:
+        - "hazelcast:hazelcast"
+    ports:
+        - "5701"
+        - "4567:4567"
+
+  hazelcast:
+    image: hz:quorum
+    volumes:
+        - ./hz/server:/configFolder
+    environment:
+        - JAVA_OPTS=-Dhazelcast.config=/configFolder/hazelcast.xml
+    ports:
+        - "5701"

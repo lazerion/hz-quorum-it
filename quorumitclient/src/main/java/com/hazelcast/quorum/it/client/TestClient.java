@@ -24,7 +24,7 @@ public class TestClient {
         get("/stop", (req, res) -> new Gson().toJson(stop()));
     }
 
-    private static QuorumStatistics stop() {
+    private static Snapshot stop() {
         return nanny.stop();
     }
 
