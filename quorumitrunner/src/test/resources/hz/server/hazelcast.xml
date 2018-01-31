@@ -17,13 +17,14 @@
         <property name="hazelcast.icmp.max.attempts">2</property>
         <property name="hazelcast.icmp.echo.fail.fast.on.startup">true</property>
         <property name="hazelcast.merge.next.run.delay.seconds">10</property>
-        <property name="hazelcast.merge.first.run.delay.seconds">20</property>
+        <property name="hazelcast.merge.first.run.delay.seconds">10</property>
         <!-- default is 5000 ms -->
         <property name="hazelcast.operation.backup.timeout.millis">1000</property>
     </properties>
 
     <quorum name="q3" enabled="true">
         <quorum-size>3</quorum-size>
+        <quorum-type>READ_WRITE</quorum-type>
     </quorum>
 
     <list name="default">
@@ -31,7 +32,17 @@
         <backup-count>2</backup-count>
     </list>
 
+    <list name="tx">
+        <quorum-ref>q3</quorum-ref>
+        <backup-count>2</backup-count>
+    </list>
+
     <set name="default">
+        <quorum-ref>q3</quorum-ref>
+        <backup-count>2</backup-count>
+    </set>
+
+    <set name="tx">
         <quorum-ref>q3</quorum-ref>
         <backup-count>2</backup-count>
     </set>
@@ -71,4 +82,19 @@
         <quorum-ref>q3</quorum-ref>
         <backup-count>2</backup-count>
     </multimap>
+
+    <multimap name="tx">
+        <quorum-ref>q3</quorum-ref>
+        <backup-count>2</backup-count>
+    </multimap>
+
+    <executor-service>
+        <quorum-ref>q3</quorum-ref>
+        <queue-capacity>1000</queue-capacity>
+    </executor-service>
+
+    <durable-executor-service>
+        <quorum-ref>q3</quorum-ref>
+        <capacity>1000</capacity>
+    </durable-executor-service>
 </hazelcast>

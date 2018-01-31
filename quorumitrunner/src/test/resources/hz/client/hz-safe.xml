@@ -8,6 +8,7 @@
         <password>s3crEt</password>
     </group>
     <network>
+        <redo-operation>true</redo-operation>
         <icmp-ping enabled="true">
             <timeout-milliseconds>100</timeout-milliseconds>
             <interval-milliseconds>1000</interval-milliseconds>

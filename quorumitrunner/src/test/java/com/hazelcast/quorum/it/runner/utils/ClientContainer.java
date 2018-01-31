@@ -48,11 +48,24 @@ public class ClientContainer {
         return sendRequest(request);
     }
 
+    public QuorumStatistics snapshot() {
+        Request request = new Request.Builder()
+                .url(String.format("%s/snapshot", baseUrl))
+                .build();
+
+        return getQuorumStatistics(request);
+    }
+
     public QuorumStatistics stop() {
         Request request = new Request.Builder()
                 .url(String.format("%s/stop", baseUrl))
                 .build();
 
+        return getQuorumStatistics(request);
+
+    }
+
+    private QuorumStatistics getQuorumStatistics(Request request) {
         try {
             Response response = client.newCall(request).execute();
             if (!response.isSuccessful()) {
@@ -63,6 +76,5 @@ public class ClientContainer {
         } catch (Exception ex) {
             return null;
         }
-
     }
 }

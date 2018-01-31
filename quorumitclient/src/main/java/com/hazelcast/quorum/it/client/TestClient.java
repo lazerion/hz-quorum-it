@@ -22,6 +22,11 @@ public class TestClient {
         get("/sanity/:count", (req, res) -> sanity(req.params(":count")));
         get("/run", (req, res) -> run());
         get("/stop", (req, res) -> new Gson().toJson(stop()));
+        get("/snapshot", (req, res) -> new Gson().toJson(snapshot()));
+    }
+
+    private static Snapshot snapshot() {
+        return nanny.snapshot();
     }
 
     private static Snapshot stop() {
@@ -29,7 +34,7 @@ public class TestClient {
     }
 
     private static Boolean run() {
-        return nanny.runOn(client);
+        return nanny.run(client);
     }
 
     private static Boolean sanity(String count) {

@@ -3,7 +3,13 @@ package com.hazelcast.quorum.it.client;
 
 import com.hazelcast.cardinality.CardinalityEstimator;
 import com.hazelcast.core.*;
+import com.hazelcast.durableexecutor.DurableExecutorService;
+import com.hazelcast.quorum.QuorumException;
 import com.hazelcast.ringbuffer.Ringbuffer;
+import com.hazelcast.scheduledexecutor.IScheduledExecutorService;
+import com.hazelcast.transaction.TransactionContext;
+import com.hazelcast.transaction.TransactionException;
+import com.hazelcast.transaction.TransactionOptions;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -11,13 +17,14 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
 import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 final class FixtureBuilder {
     private static Logger logger = LoggerFactory.getLogger(FixtureBuilder.class);
 
-    private static int FAIL_SAFE_TIMEOUT = 100;
+    private static int FAIL_SAFE_TIMEOUT = 200;
 
     private final HazelcastInstance client;
     private final QuorumStatistics statistics;
@@ -38,7 +45,13 @@ final class FixtureBuilder {
                 atomicReference(),
                 cardinalityEstimator(),
                 countDownLatch(),
-                multiMap()
+                multiMap(),
+                transactionalSet(),
+                transactionalList(),
+                transactionalMultiMap(),
+                executorService(),
+                durableExecutorService(),
+                scheduledExecutorService()
         )
                 .map(it -> it.statistics(statistics))
                 .map(it -> it.timeout(FAIL_SAFE_TIMEOUT)) // timeout effects fails
@@ -75,12 +88,8 @@ final class FixtureBuilder {
         return QuorumTask.builder()
                 .write(it -> semaphore.tryAcquire())
                 .read(it -> {
-                    try {
-                        semaphore.release();
-                        return true;
-                    } catch (Exception e) {
-                        return false;
-                    }
+                    semaphore.release();
+                    return true;
                 })
                 .test(it -> semaphore.availablePermits() == permits)
                 .name(ISemaphore.class.getName());
@@ -171,5 +180,152 @@ final class FixtureBuilder {
                 .read(it -> !multiMap.get(it).isEmpty())
                 .test(it -> multiMap.size() != 0)
                 .name(MultiMap.class.getName());
+    }
+
+    private QuorumTask.QuorumTaskBuilder transactionalSet() {
+        TransactionOptions options = new TransactionOptions()
+                .setTransactionType(TransactionOptions.TransactionType.TWO_PHASE);
+        TransactionContext context = client.newTransactionContext(options);
+
+        return QuorumTask.builder()
+                .write(it -> {
+                    try {
+                        context.beginTransaction();
+                        TransactionalSet<String> set = context.getSet("tx");
+                        set.add(it);
+                        context.commitTransaction();
+                        return true;
+                    } catch (TransactionException ex) {
+                        logger.error("Transaction exception {}", ex.getMessage());
+                        throw new QuorumException(ex.getMessage());
+                    }
+                })
+                .read(it -> {
+                    try {
+                        context.beginTransaction();
+                        TransactionalSet<String> set = context.getSet("tx");
+                        set.remove(it);
+                        context.commitTransaction();
+                        return true;
+                    } catch (TransactionException ex) {
+                        logger.error("Transaction exception {}", ex.getMessage());
+                        throw new QuorumException(ex.getMessage());
+                    }
+                })
+                .test(it -> {
+                    TransactionalSet<String> set = context.getSet("tx");
+                    return set.size() == 0;
+                });
+    }
+
+    private QuorumTask.QuorumTaskBuilder transactionalList() {
+        TransactionOptions options = new TransactionOptions()
+                .setTransactionType(TransactionOptions.TransactionType.TWO_PHASE);
+        TransactionContext context = client.newTransactionContext(options);
+
+        return QuorumTask.builder()
+                .write(it -> {
+                    try {
+                        context.beginTransaction();
+                        TransactionalList<String> set = context.getList("tx");
+                        set.add(it);
+                        context.commitTransaction();
+                        return true;
+                    } catch (TransactionException ex) {
+                        logger.error("Transaction exception {}", ex.getMessage());
+                        throw new QuorumException(ex.getMessage());
+                    }
+                })
+                .read(it -> {
+                    try {
+                        context.beginTransaction();
+                        TransactionalList<String> set = context.getList("tx");
+                        set.remove(it);
+                        context.commitTransaction();
+                        return true;
+                    } catch (TransactionException ex) {
+                        logger.error("Transaction exception {}", ex.getMessage());
+                        throw new QuorumException(ex.getMessage());
+                    }
+                })
+                .test(it -> {
+                    TransactionalList<String> set = context.getList("tx");
+                    return set.size() == 0;
+                });
+    }
+
+    private QuorumTask.QuorumTaskBuilder transactionalMultiMap() {
+        TransactionOptions options = new TransactionOptions()
+                .setTransactionType(TransactionOptions.TransactionType.TWO_PHASE);
+        TransactionContext context = client.newTransactionContext(options);
+
+        return QuorumTask.builder()
+                .write(it -> {
+                    try {
+                        context.beginTransaction();
+                        TransactionalMultiMap<String, String> set = context.getMultiMap("tx");
+                        set.put(it, it);
+                        context.commitTransaction();
+                        return true;
+                    } catch (TransactionException ex) {
+                        logger.error("Transaction exception {}", ex.getMessage());
+                        throw new QuorumException(ex.getMessage());
+                    }
+                })
+                .read(it -> {
+                    try {
+                        context.beginTransaction();
+                        TransactionalMultiMap<String, String> set = context.getMultiMap("tx");
+                        set.remove(it, it);
+                        context.commitTransaction();
+                        return true;
+                    } catch (TransactionException ex) {
+                        logger.error("Transaction exception {}", ex.getMessage());
+                        throw new QuorumException(ex.getMessage());
+                    }
+                })
+                .test(it -> {
+                    TransactionalMultiMap<String, String> set = context.getMultiMap("tx");
+                    return set.size() == 0;
+                });
+    }
+
+    private QuorumTask.QuorumTaskBuilder executorService() {
+
+        IExecutorService service = client.getExecutorService("default");
+        return QuorumTask.builder()
+                .write(it -> {
+                    service.submit((Callable<Void>) () -> null);
+                    return true;
+                })
+                .test(it -> !service.isTerminated())
+                .read(it -> true);
+
+    }
+
+    private QuorumTask.QuorumTaskBuilder durableExecutorService() {
+
+        DurableExecutorService service = client.getDurableExecutorService("default");
+        return QuorumTask.builder()
+                .write(it -> {
+                    service.submit((Callable<Void>) () -> null);
+                    return true;
+                })
+                .test(it -> !service.isTerminated())
+                .read(it -> true);
+
+    }
+
+    private QuorumTask.QuorumTaskBuilder scheduledExecutorService() {
+
+        IScheduledExecutorService service = client.getScheduledExecutorService("default");
+        return QuorumTask.builder()
+                .write(it -> {
+                    service.schedule((Callable<Void>) () -> null, 1, TimeUnit.MILLISECONDS);
+                    return true;
+                })
+                .test(it -> true)
+                .read(it -> true);
+
     }
 }

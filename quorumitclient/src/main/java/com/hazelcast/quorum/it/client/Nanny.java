@@ -19,6 +19,7 @@ class Nanny {
     private List<Future<Void>> futures;
 
     Nanny() {
+        reset();
     }
 
     private void reset() {
@@ -27,9 +28,13 @@ class Nanny {
         this.futures = new LinkedList<>();
     }
 
-    Boolean runOn(HazelcastInstance client) {
+    Boolean run(HazelcastInstance client) {
+        if (!futures.isEmpty()) {
+            logger.info("Already running data structures");
+            statistics.reset();
+            return true;
+        }
         try {
-            reset();
             Collection<Callable<Void>> callables = new FixtureBuilder(client, statistics).callables();
             callables.forEach(it -> futures.add(executorService.submit(it)));
             return futures.size() > 0;
@@ -39,19 +44,22 @@ class Nanny {
         }
     }
 
+    Snapshot snapshot() {
+        return statistics.snapshot();
+    }
+
     Snapshot stop() {
         Snapshot snapshot = statistics.snapshot();
         try {
             futures.forEach(it -> it.cancel(true));
             executorService.shutdown();
             executorService.awaitTermination(2, TimeUnit.SECONDS);
-        }
-        catch (InterruptedException e) {
+        } catch (InterruptedException e) {
             logger.error("tasks interrupted {}", e.getMessage(), e);
-        }
-        finally {
+        } finally {
             if (!executorService.isTerminated())
                 executorService.shutdownNow();
+            futures.clear();
         }
         return snapshot;
     }

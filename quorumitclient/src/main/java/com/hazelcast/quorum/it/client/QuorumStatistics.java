@@ -19,4 +19,12 @@ class QuorumStatistics {
                 .quorumExceptions(this.quorumExceptions.intValue())
                 .build();
     }
+
+    void reset(){
+        success.set(0);
+        failures.set(0);
+        exceptions.set(0);
+        quorumExceptions.set(0);
+    }
+
 }

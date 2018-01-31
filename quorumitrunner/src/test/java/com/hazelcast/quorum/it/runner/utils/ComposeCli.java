@@ -88,7 +88,7 @@ public class ComposeCli {
         return this;
     }
 
-    public void logs(){
+    public void logs() {
         String line = String.format("docker-compose -f %s ps -q", project.getAbsoluteFile());
         DefaultExecutor executor = new DefaultExecutor();
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
@@ -106,7 +106,7 @@ public class ComposeCli {
         for (String id : ids) {
             line = String.format("docker logs -t %s", id);
             Path path =
-                    Paths.get(id.substring(0, 8) +
+                    Paths.get(name(id) +
                             "-" +
                             Instant.now().truncatedTo(ChronoUnit.MINUTES).toString().replace("-", "").replace(":", "") +
                             ".txt");
@@ -121,6 +121,21 @@ public class ComposeCli {
             } catch (IOException ignored) {
                 System.err.println(ignored.getMessage());
             }
+        }
+    }
+
+    private String name(String id) {
+        String line = String.format("docker inspect --format={{.Name}} %s", id);
+        DefaultExecutor executor = new DefaultExecutor();
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        PumpStreamHandler streamHandler = new PumpStreamHandler(outputStream);
+        executor.setStreamHandler(streamHandler);
+
+        try {
+            executor.execute(CommandLine.parse(line));
+            return outputStream.toString().trim().replace("/","");
+        } catch (IOException e) {
+            return id.substring(0, 8);
         }
     }
 }
