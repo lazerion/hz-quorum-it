@@ -9,15 +9,22 @@
         <password>s3crEt</password>
     </group>
 
+    <network>
+        <failure-detector>
+            <icmp enabled="true">
+                <timeout-milliseconds>100</timeout-milliseconds>
+                <fail-fast-on-startup>true</fail-fast-on-startup>
+                <interval-milliseconds>1000</interval-milliseconds>
+                <max-attempts>2</max-attempts>
+                <parallel-mode>true</parallel-mode>
+                <ttl>255</ttl>
+            </icmp>
+        </failure-detector>
+    </network>
+
     <properties>
-        <property name="hazelcast.icmp.enabled">true</property>
-        <property name="hazelcast.icmp.timeout">100</property>
-        <property name="hazelcast.icmp.interval">1000</property>
-        <property name="hazelcast.icmp.ttl">255</property>
-        <property name="hazelcast.icmp.max.attempts">2</property>
-        <property name="hazelcast.icmp.echo.fail.fast.on.startup">true</property>
-        <property name="hazelcast.merge.next.run.delay.seconds">10</property>
-        <property name="hazelcast.merge.first.run.delay.seconds">10</property>
+        <property name="hazelcast.merge.next.run.delay.seconds">25</property>
+        <property name="hazelcast.merge.first.run.delay.seconds">50</property>
         <!-- default is 5000 ms -->
         <property name="hazelcast.operation.backup.timeout.millis">1000</property>
     </properties>

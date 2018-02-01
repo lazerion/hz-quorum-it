@@ -7,6 +7,9 @@
         <name>hz-quorum</name>
         <password>s3crEt</password>
     </group>
+    <properties>
+        <property name="hazelcast.logging.type">slf4j</property>
+    </properties>
     <network>
         <redo-operation>false</redo-operation>
         <icmp-ping enabled="true">

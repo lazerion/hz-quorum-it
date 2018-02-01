@@ -33,7 +33,7 @@ services:
     volumes:
       - ./hz/server:/configFolder
     environment:
-      - JAVA_OPTS=-Dhazelcast.config=/configFolder/hazelcast.xml
+      - JAVA_OPTS=-Dhazelcast.config=/configFolder/hazelcast.xml -Djava.util.logging.config.file=/configFolder/logging.properties
     ports:
       - "5701"
     networks:
@@ -45,7 +45,7 @@ services:
     volumes:
       - ./hz/server:/configFolder
     environment:
-      - JAVA_OPTS=-Dhazelcast.config=/configFolder/hazelcast.xml
+      - JAVA_OPTS=-Dhazelcast.config=/configFolder/hazelcast.xml -Djava.util.logging.config.file=/configFolder/logging.properties
     ports:
       - "5701"
     networks:
@@ -57,7 +57,7 @@ services:
     volumes:
       - ./hz/server:/configFolder
     environment:
-      - JAVA_OPTS=-Dhazelcast.config=/configFolder/hazelcast.xml
+      - JAVA_OPTS=-Dhazelcast.config=/configFolder/hazelcast.xml -Djava.util.logging.config.file=/configFolder/logging.properties
     ports:
       - "5701"
     networks:
@@ -70,7 +70,7 @@ services:
     volumes:
       - ./hz/server:/configFolder
     environment:
-      - JAVA_OPTS=-Dhazelcast.config=/configFolder/hazelcast.xml
+      - JAVA_OPTS=-Dhazelcast.config=/configFolder/hazelcast.xml -Djava.util.logging.config.file=/configFolder/logging.properties
     ports:
       - "5701"
     networks:
@@ -82,7 +82,7 @@ services:
     volumes:
       - ./hz/server:/configFolder
     environment:
-      - JAVA_OPTS=-Dhazelcast.config=/configFolder/hazelcast.xml
+      - JAVA_OPTS=-Dhazelcast.config=/configFolder/hazelcast.xml -Djava.util.logging.config.file=/configFolder/logging.properties
     ports:
       - "5701"
     networks:

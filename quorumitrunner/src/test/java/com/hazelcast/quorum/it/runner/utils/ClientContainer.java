@@ -8,8 +8,6 @@ import org.slf4j.LoggerFactory;
 
 public class ClientContainer {
     private final Logger logger = LoggerFactory.getLogger(ClientContainer.class);
-    private static final MediaType JSON
-            = MediaType.parse("application/json; charset=utf-8");
 
     private final String baseUrl;
     private OkHttpClient client = new OkHttpClient();
@@ -34,7 +32,9 @@ public class ClientContainer {
                 logger.error("error {}", response.message());
                 return false;
             }
-            return Boolean.valueOf(response.body().string());
+            try (final ResponseBody body = response.body()) {
+                return Boolean.valueOf(body.string());
+            }
         } catch (Exception ex) {
             return false;
         }
@@ -71,8 +71,10 @@ public class ClientContainer {
             if (!response.isSuccessful()) {
                 return null;
             }
-            final String snap = response.body().string();
-            return new Gson().fromJson(snap, QuorumStatistics.class);
+            try (final ResponseBody body = response.body()) {
+                final String snap = body.string();
+                return new Gson().fromJson(snap, QuorumStatistics.class);
+            }
         } catch (Exception ex) {
             return null;
         }

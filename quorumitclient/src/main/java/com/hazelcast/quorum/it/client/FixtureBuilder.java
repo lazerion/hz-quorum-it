@@ -24,7 +24,7 @@ import java.util.stream.Stream;
 final class FixtureBuilder {
     private static Logger logger = LoggerFactory.getLogger(FixtureBuilder.class);
 
-    private static int FAIL_SAFE_TIMEOUT = 200;
+    private static int FAIL_SAFE_TIMEOUT = 50;
 
     private final HazelcastInstance client;
     private final QuorumStatistics statistics;
