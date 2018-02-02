@@ -317,7 +317,8 @@ final class FixtureBuilder {
                     return true;
                 })
                 .test(it -> !service.isTerminated())
-                .read(it -> true);
+                .read(it -> true)
+                .name(IExecutorService.class.getName());
 
     }
 
@@ -331,7 +332,8 @@ final class FixtureBuilder {
                     return true;
                 })
                 .test(it -> !service.isTerminated())
-                .read(it -> true);
+                .read(it -> true)
+                .name(DurableExecutorService.class.getName());
 
     }
 
@@ -345,7 +347,8 @@ final class FixtureBuilder {
                     return true;
                 })
                 .test(it -> true)
-                .read(it -> true);
+                .read(it -> true)
+                .name(IScheduledExecutorService.class.getName());
 
     }
 }
