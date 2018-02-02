@@ -95,13 +95,18 @@
         <backup-count>2</backup-count>
     </multimap>
 
-    <executor-service>
+    <executor-service name="default">
         <quorum-ref>q3</quorum-ref>
         <queue-capacity>1000</queue-capacity>
     </executor-service>
 
-    <durable-executor-service>
+    <durable-executor-service name="default">
         <quorum-ref>q3</quorum-ref>
         <capacity>1000</capacity>
     </durable-executor-service>
+
+    <scheduled-executor-service name="default">
+        <quorum-ref>q3</quorum-ref>
+        <capacity>1000</capacity>
+    </scheduled-executor-service>
 </hazelcast>

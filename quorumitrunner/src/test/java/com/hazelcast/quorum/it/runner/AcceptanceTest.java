@@ -217,9 +217,7 @@ public class AcceptanceTest {
         QuorumStatistics statistics = client.snapshot();
 
         logger.info("Statistics {}", statistics);
-        if (statistics.getFailures() != 0 ||
-                statistics.getExceptions() != 0 ||
-                statistics.getQuorumExceptions() != 0) {
+        if (statistics.getFailures() != 0) {
             cli.logs();
         }
 

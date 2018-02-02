@@ -4,7 +4,6 @@ package com.hazelcast.quorum.it.client;
 import com.hazelcast.cardinality.CardinalityEstimator;
 import com.hazelcast.core.*;
 import com.hazelcast.durableexecutor.DurableExecutorService;
-import com.hazelcast.quorum.QuorumException;
 import com.hazelcast.ringbuffer.Ringbuffer;
 import com.hazelcast.scheduledexecutor.IScheduledExecutorService;
 import com.hazelcast.transaction.TransactionContext;
@@ -24,7 +23,7 @@ import java.util.stream.Stream;
 final class FixtureBuilder {
     private static Logger logger = LoggerFactory.getLogger(FixtureBuilder.class);
 
-    private static int FAIL_SAFE_TIMEOUT = 50;
+    private static int FAIL_SAFE_TIMEOUT = 100;
 
     private final HazelcastInstance client;
     private final QuorumStatistics statistics;
@@ -183,111 +182,129 @@ final class FixtureBuilder {
     }
 
     private QuorumTask.QuorumTaskBuilder transactionalSet() {
-        TransactionOptions options = new TransactionOptions()
-                .setTransactionType(TransactionOptions.TransactionType.TWO_PHASE);
-        TransactionContext context = client.newTransactionContext(options);
-
         return QuorumTask.builder()
                 .write(it -> {
+                    TransactionContext context = null;
                     try {
+                        TransactionOptions options = new TransactionOptions()
+                                .setTransactionType(TransactionOptions.TransactionType.TWO_PHASE);
+                        context = client.newTransactionContext(options);
                         context.beginTransaction();
                         TransactionalSet<String> set = context.getSet("tx");
                         set.add(it);
                         context.commitTransaction();
                         return true;
                     } catch (TransactionException ex) {
-                        logger.error("Transaction exception {}", ex.getMessage());
-                        throw new QuorumException(ex.getMessage());
+                        if (context != null) {
+                            context.rollbackTransaction();
+                        }
+                        throw ex;
                     }
                 })
                 .read(it -> {
+                    TransactionContext context = null;
                     try {
+                        TransactionOptions options = new TransactionOptions()
+                                .setTransactionType(TransactionOptions.TransactionType.TWO_PHASE);
+                        context = client.newTransactionContext(options);
                         context.beginTransaction();
                         TransactionalSet<String> set = context.getSet("tx");
                         set.remove(it);
                         context.commitTransaction();
                         return true;
                     } catch (TransactionException ex) {
-                        logger.error("Transaction exception {}", ex.getMessage());
-                        throw new QuorumException(ex.getMessage());
+                        if (context != null) {
+                            context.rollbackTransaction();
+                        }
+                        throw ex;
                     }
                 })
-                .test(it -> {
-                    TransactionalSet<String> set = context.getSet("tx");
-                    return set.size() == 0;
-                });
+                .test(it -> true)
+                .name(TransactionalSet.class.getName());
     }
 
     private QuorumTask.QuorumTaskBuilder transactionalList() {
-        TransactionOptions options = new TransactionOptions()
-                .setTransactionType(TransactionOptions.TransactionType.TWO_PHASE);
-        TransactionContext context = client.newTransactionContext(options);
-
         return QuorumTask.builder()
                 .write(it -> {
+                    TransactionContext context = null;
                     try {
+                        TransactionOptions options = new TransactionOptions()
+                                .setTransactionType(TransactionOptions.TransactionType.TWO_PHASE);
+                        context = client.newTransactionContext(options);
                         context.beginTransaction();
                         TransactionalList<String> set = context.getList("tx");
                         set.add(it);
                         context.commitTransaction();
                         return true;
                     } catch (TransactionException ex) {
-                        logger.error("Transaction exception {}", ex.getMessage());
-                        throw new QuorumException(ex.getMessage());
+                        if (context != null) {
+                            context.rollbackTransaction();
+                        }
+                        throw ex;
                     }
                 })
                 .read(it -> {
+                    TransactionContext context = null;
                     try {
+                        TransactionOptions options = new TransactionOptions()
+                                .setTransactionType(TransactionOptions.TransactionType.TWO_PHASE);
+                        context = client.newTransactionContext(options);
                         context.beginTransaction();
                         TransactionalList<String> set = context.getList("tx");
                         set.remove(it);
                         context.commitTransaction();
                         return true;
                     } catch (TransactionException ex) {
-                        logger.error("Transaction exception {}", ex.getMessage());
-                        throw new QuorumException(ex.getMessage());
+                        if (context != null) {
+                            context.rollbackTransaction();
+                        }
+                        throw ex;
                     }
                 })
-                .test(it -> {
-                    TransactionalList<String> set = context.getList("tx");
-                    return set.size() == 0;
-                });
+                .test(it -> true)
+                .name(TransactionalList.class.getName());
     }
 
     private QuorumTask.QuorumTaskBuilder transactionalMultiMap() {
-        TransactionOptions options = new TransactionOptions()
-                .setTransactionType(TransactionOptions.TransactionType.TWO_PHASE);
-        TransactionContext context = client.newTransactionContext(options);
-
         return QuorumTask.builder()
                 .write(it -> {
+                    TransactionContext context = null;
                     try {
+                        TransactionOptions options = new TransactionOptions()
+                                .setTransactionType(TransactionOptions.TransactionType.TWO_PHASE);
+                        context = client.newTransactionContext(options);
                         context.beginTransaction();
                         TransactionalMultiMap<String, String> set = context.getMultiMap("tx");
                         set.put(it, it);
                         context.commitTransaction();
                         return true;
                     } catch (TransactionException ex) {
-                        logger.error("Transaction exception {}", ex.getMessage());
-                        throw new QuorumException(ex.getMessage());
+                        if (context != null) {
+                            context.rollbackTransaction();
+                        }
+                        throw ex;
                     }
                 })
                 .read(it -> {
+                    TransactionContext context = null;
                     try {
+                        TransactionOptions options = new TransactionOptions()
+                                .setTransactionType(TransactionOptions.TransactionType.TWO_PHASE);
+                        context = client.newTransactionContext(options);
                         context.beginTransaction();
                         TransactionalMultiMap<String, String> set = context.getMultiMap("tx");
                         set.remove(it, it);
                         context.commitTransaction();
                         return true;
                     } catch (TransactionException ex) {
-                        logger.error("Transaction exception {}", ex.getMessage());
-                        throw new QuorumException(ex.getMessage());
+                        if (context != null) {
+                            context.rollbackTransaction();
+                        }
+                        throw ex;
                     }
                 })
-                .test(it -> {
-                    TransactionalMultiMap<String, String> set = context.getMultiMap("tx");
-                    return set.size() == 0;
-                });
+                .test(it -> true)
+                .name(TransactionalMultiMap.class.getName());
     }
 
     private QuorumTask.QuorumTaskBuilder executorService() {
@@ -295,7 +312,8 @@ final class FixtureBuilder {
         IExecutorService service = client.getExecutorService("default");
         return QuorumTask.builder()
                 .write(it -> {
-                    service.submit((Callable<Void>) () -> null);
+                    EchoTask task = new EchoTask(it);
+                    service.submit(task);
                     return true;
                 })
                 .test(it -> !service.isTerminated())
@@ -308,7 +326,8 @@ final class FixtureBuilder {
         DurableExecutorService service = client.getDurableExecutorService("default");
         return QuorumTask.builder()
                 .write(it -> {
-                    service.submit((Callable<Void>) () -> null);
+                    EchoTask task = new EchoTask(it);
+                    service.submit(task);
                     return true;
                 })
                 .test(it -> !service.isTerminated())
@@ -321,7 +340,8 @@ final class FixtureBuilder {
         IScheduledExecutorService service = client.getScheduledExecutorService("default");
         return QuorumTask.builder()
                 .write(it -> {
-                    service.schedule((Callable<Void>) () -> null, 1, TimeUnit.MILLISECONDS);
+                    EchoTask task = new EchoTask(it);
+                    service.schedule(task, 1, TimeUnit.MILLISECONDS);
                     return true;
                 })
                 .test(it -> true)

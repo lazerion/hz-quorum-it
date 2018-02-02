@@ -13,7 +13,7 @@ import java.util.concurrent.*;
 class Nanny {
     private static Logger logger = LoggerFactory.getLogger(Nanny.class);
 
-    private final static int DEFAULT_THREAD_COUNT = 10;
+    private final static int DEFAULT_THREAD_COUNT = 25;
     private ExecutorService executorService;
     private QuorumStatistics statistics;
     private List<Future<Void>> futures;
