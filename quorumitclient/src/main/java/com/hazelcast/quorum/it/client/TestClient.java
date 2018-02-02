@@ -1,6 +1,5 @@
 package com.hazelcast.quorum.it.client;
 
-
 import com.google.gson.Gson;
 import com.hazelcast.client.HazelcastClient;
 import com.hazelcast.client.config.ClientConfig;
@@ -38,7 +37,11 @@ public class TestClient {
     }
 
     private static Boolean sanity(String count) {
-        return client.getCluster().getMembers().size() == Integer.parseInt(count);
+        try{
+            return client.getCluster().getMembers().size() == Integer.parseInt(count);
+        } catch (Exception ex) {
+            return false;
+        }
     }
 
     private static void startClient() throws InterruptedException {

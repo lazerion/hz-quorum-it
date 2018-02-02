@@ -1,6 +1,5 @@
 package com.hazelcast.quorum.it.runner.utils;
 
-
 import com.google.gson.Gson;
 import okhttp3.*;
 import org.slf4j.Logger;
@@ -16,12 +15,10 @@ public class ClientContainer {
         baseUrl = "http://localhost:4567";
     }
 
-
     public boolean sanity(int clusterSize) {
         Request request = new Request.Builder()
                 .url(String.format("%s/sanity/%d", baseUrl, clusterSize))
                 .build();
-
         return sendRequest(request);
     }
 
@@ -44,7 +41,6 @@ public class ClientContainer {
         Request request = new Request.Builder()
                 .url(String.format("%s/run", baseUrl))
                 .build();
-
         return sendRequest(request);
     }
 
@@ -52,7 +48,6 @@ public class ClientContainer {
         Request request = new Request.Builder()
                 .url(String.format("%s/snapshot", baseUrl))
                 .build();
-
         return getQuorumStatistics(request);
     }
 
@@ -60,9 +55,7 @@ public class ClientContainer {
         Request request = new Request.Builder()
                 .url(String.format("%s/stop", baseUrl))
                 .build();
-
         return getQuorumStatistics(request);
-
     }
 
     private QuorumStatistics getQuorumStatistics(Request request) {
