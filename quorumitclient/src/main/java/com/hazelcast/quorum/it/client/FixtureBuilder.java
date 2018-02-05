@@ -4,6 +4,7 @@ package com.hazelcast.quorum.it.client;
 import com.hazelcast.cardinality.CardinalityEstimator;
 import com.hazelcast.core.*;
 import com.hazelcast.durableexecutor.DurableExecutorService;
+import com.hazelcast.quorum.it.EchoTask;
 import com.hazelcast.ringbuffer.Ringbuffer;
 import com.hazelcast.scheduledexecutor.IScheduledExecutorService;
 import com.hazelcast.transaction.TransactionContext;
@@ -53,7 +54,7 @@ final class FixtureBuilder {
                 scheduledExecutorService()
         )
                 .map(it -> it.statistics(statistics))
-                .map(it -> it.timeout(FAIL_SAFE_TIMEOUT)) // timeout effects fails
+                .map(it -> it.timeout(FAIL_SAFE_TIMEOUT))
                 .map(QuorumTask.QuorumTaskBuilder::build)
                 .peek(it -> logger.info("Created callable {}", it.toString()))
                 .collect(Collectors.toList());

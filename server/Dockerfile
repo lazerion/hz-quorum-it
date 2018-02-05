@@ -5,6 +5,7 @@ RUN mkdir -p $HZ_HOME
 WORKDIR $HZ_HOME
 # Download hazelcast jars from maven repo.
 ADD hazelcast-all-3.10-SNAPSHOT.jar $HZ_HOME
+ADD echo-task-1.0-SNAPSHOT.jar $HZ_HOME
 
 ADD server.sh /$HZ_HOME/server.sh
 RUN chmod +x /$HZ_HOME/server.sh

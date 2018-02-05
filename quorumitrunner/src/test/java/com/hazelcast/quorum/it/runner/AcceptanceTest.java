@@ -56,7 +56,7 @@ public class AcceptanceTest {
      * Current cluster size wait is at most {@code CLUSTER_WAIT} secs
      */
     @Test
-    public void noQuorumExceptionWhenClientConnectedToSufficientQuorum() throws IOException, InterruptedException {
+    public void noQuorumExceptionWhenClientConnectedToMajority() throws IOException, InterruptedException {
         final int initialClusterSize = 5;
         final int expectedClusterSize = 3;
         final int range = 1;
@@ -109,7 +109,7 @@ public class AcceptanceTest {
      * Current cluster size wait is at most 60 secs
      */
     @Test
-    public void quorumExceptionWhenClientConnectedToUnderQuorumBrain() throws IOException {
+    public void quorumExceptionWhenClientConnectedToMinority() throws IOException {
         final int initialClusterSize = 5;
         final int expectedClusterSize = 2;
         final int range = 1;
@@ -151,7 +151,7 @@ public class AcceptanceTest {
     }
 
     @Test
-    public void noQuorumExceptionWhenOwnerGoesOffInSmallerBrain() throws IOException, InterruptedException {
+    public void noQuorumExceptionWhenOwnerGoesOffInMinority() throws IOException, InterruptedException {
         final int initialClusterSize = 5;
         final int expectedClusterSize = 3;
 

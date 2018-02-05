@@ -1,4 +1,4 @@
-package com.hazelcast.quorum.it.client;
+package com.hazelcast.quorum.it;
 
 import java.io.Serializable;
 
@@ -6,7 +6,7 @@ public class EchoTask implements Runnable, Serializable {
 
     private final String msg;
 
-    EchoTask(String msg) {
+    public EchoTask(String msg) {
         this.msg = msg;
     }
 
