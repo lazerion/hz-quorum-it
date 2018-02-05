@@ -13,7 +13,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.IntStream;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.awaitility.Awaitility.with;
@@ -27,7 +26,7 @@ public class AcceptanceTest {
     private ClientContainer client;
 
     private static int CLUSTER_WAIT = 30;
-    private static int OPERATION_WAIT = 5;
+    private static int OPERATION_WAIT = 10;
 
     @Before
     public void before() {
@@ -59,95 +58,92 @@ public class AcceptanceTest {
     public void noQuorumExceptionWhenClientConnectedToMajority() throws IOException, InterruptedException {
         final int initialClusterSize = 5;
         final int expectedClusterSize = 3;
-        final int range = 1;
 
         cli.up("deployment-1.yaml");
-        with().pollInterval(1, SECONDS).await().atMost(CLUSTER_WAIT, SECONDS)
+        with().pollInterval(1, SECONDS)
+                .await()
+                .atMost(CLUSTER_WAIT, SECONDS)
                 .untilAsserted(() -> assertTrue(client.sanity(1)));
 
         cli.scale("hazelcast", initialClusterSize);
-        IntStream.range(0, range).forEach(it -> {
-            try {
-                with().pollInterval(1, SECONDS).await().atMost(CLUSTER_WAIT, SECONDS)
-                        .untilAsserted(() -> assertTrue(client.sanity(initialClusterSize)));
 
-                with().pollInterval(1, SECONDS).await().atMost(OPERATION_WAIT, SECONDS)
-                        .untilAsserted(() -> assertTrue(client.run()));
+        with().pollInterval(1, SECONDS)
+                .await()
+                .atMost(CLUSTER_WAIT, SECONDS)
+                .untilAsserted(() -> assertTrue(client.sanity(initialClusterSize)));
 
-                DefaultExecuteResultHandler resultHandler = new DefaultExecuteResultHandler();
-                cli.networkDelay(".*hazelcast[_]{1}[4,5]{1}.*", resultHandler);
+        assertTrue(client.run());
 
-                with().pollInterval(1, SECONDS).await().atMost(CLUSTER_WAIT, SECONDS)
-                        .untilAsserted(() -> assertTrue(client.sanity(expectedClusterSize)));
+        DefaultExecuteResultHandler resultHandler = new DefaultExecuteResultHandler();
+        cli.networkDelay(".*hazelcast[_]{1}[4,5]{1}.*", resultHandler);
 
-                resultHandler.waitFor();
-                assertTrue(resultHandler.getExitValue() == 0);
+        with().pollDelay(OPERATION_WAIT, SECONDS)
+                .pollInterval(1, SECONDS)
+                .await()
+                .atMost(CLUSTER_WAIT, SECONDS)
+                .untilAsserted(() -> assertTrue(client.sanity(expectedClusterSize)));
 
-                with().pollInterval(1, TimeUnit.SECONDS).await().atMost(OPERATION_WAIT, SECONDS)
-                        .untilAsserted(() -> assertNotNull(client.snapshot()));
+        resultHandler.waitFor();
+        assertTrue(resultHandler.getExitValue() == 0);
 
-                QuorumStatistics statistics = client.snapshot();
+        QuorumStatistics statistics = client.snapshot();
+        assertNotNull(statistics);
 
-                logger.info("Statistics {}", statistics);
-                if (statistics.getFailures() != 0 ||
-                        statistics.getExceptions() != 0 ||
-                        statistics.getQuorumExceptions() != 0) {
-                    cli.logs();
-                }
-                assertTrue(statistics.getQuorumExceptions() == 0);
-            } catch (Exception e) {
-                logger.error(e.getMessage());
-                throw new RuntimeException(e);
-            }
-        });
+        logger.info("Statistics {}", statistics);
+        if (statistics.getFailures() != 0 ||
+                statistics.getExceptions() != 0 ||
+                statistics.getQuorumExceptions() != 0) {
+            cli.logs();
+        }
+        assertTrue(statistics.getQuorumExceptions() == 0);
+        assertTrue(statistics.getSuccess() != 0);
     }
 
     /**
      * This is a verification case after brains split and cluster size verified under
      * quorum size
      * <p>
-     * Current cluster size wait is at most 60 secs
+     * Current cluster size wait is at {@code CLUSTER_WAIT} secs
      */
     @Test
-    public void quorumExceptionWhenClientConnectedToMinority() throws IOException {
+    public void quorumExceptionWhenClientConnectedToMinority() throws IOException, InterruptedException {
         final int initialClusterSize = 5;
         final int expectedClusterSize = 2;
-        final int range = 1;
 
         cli.up("deployment-4.yaml");
         with().pollInterval(1, SECONDS).await().atMost(CLUSTER_WAIT, SECONDS)
                 .untilAsserted(() -> assertTrue(client.sanity(1)));
 
         cli.scale("hazelcast", initialClusterSize);
-        IntStream.range(0, range).forEach(it -> {
-            try {
-                with().pollInterval(1, SECONDS).await().atMost(CLUSTER_WAIT, SECONDS)
-                        .untilAsserted(() -> assertTrue(client.sanity(initialClusterSize)));
+        with().pollInterval(1, SECONDS)
+                .await()
+                .atMost(CLUSTER_WAIT, SECONDS)
+                .untilAsserted(() -> assertTrue(client.sanity(initialClusterSize)));
 
-                with().pollInterval(1, SECONDS).await().atMost(OPERATION_WAIT, SECONDS)
-                        .untilAsserted(() -> assertTrue(client.run()));
+        assertTrue(client.run());
 
-                DefaultExecuteResultHandler resultHandler = new DefaultExecuteResultHandler();
-                cli.networkDelay(".*hazelcast[_]{1}[1,2,3]{1}.*", resultHandler);
+        DefaultExecuteResultHandler resultHandler = new DefaultExecuteResultHandler();
+        cli.networkDelay(".*hazelcast[_]{1}[1,2,3]{1}.*", resultHandler);
 
-                with().pollInterval(1, SECONDS).await().atMost(CLUSTER_WAIT, SECONDS)
-                        .untilAsserted(() -> assertTrue(client.sanity(expectedClusterSize)));
+        with().pollInterval(1, SECONDS)
+                .await()
+                .atMost(CLUSTER_WAIT, SECONDS)
+                .untilAsserted(() -> assertTrue(client.sanity(expectedClusterSize)));
 
-                with().pollDelay(5, TimeUnit.SECONDS).pollInterval(1, TimeUnit.SECONDS).await().atMost(10, SECONDS)
-                        .untilAsserted(() -> assertNotNull(client.snapshot()));
+        //reset statistics
+        assertTrue(client.run());
+        //let it run with fresh statistics
+        TimeUnit.SECONDS.sleep(OPERATION_WAIT);
 
-                QuorumStatistics statistics = client.snapshot();
+        QuorumStatistics statistics = client.snapshot();
+        assertNotNull(statistics);
 
-                resultHandler.waitFor();
-                assertTrue(resultHandler.getExitValue() == 0);
+        resultHandler.waitFor();
+        assertTrue(resultHandler.getExitValue() == 0);
 
-                logger.info("Statistics {}", statistics);
-                assertTrue(statistics.getQuorumExceptions() != 0);
-            } catch (Exception e) {
-                logger.error(e.getMessage());
-                throw new RuntimeException(e);
-            }
-        });
+        logger.info("Statistics {}", statistics);
+        assertTrue(statistics.getQuorumExceptions() != 0);
+        assertTrue(statistics.getSuccess() == 0);
     }
 
     @Test
@@ -161,25 +157,27 @@ public class AcceptanceTest {
 
         cli.scale("hazelcast", initialClusterSize);
 
-        with().pollInterval(1, SECONDS).await().atMost(CLUSTER_WAIT, SECONDS)
+        with().pollInterval(1, SECONDS)
+                .await()
+                .atMost(CLUSTER_WAIT, SECONDS)
                 .untilAsserted(() -> assertTrue(client.sanity(initialClusterSize)));
 
-        with().pollInterval(1, SECONDS).await().atMost(5, SECONDS)
-                .untilAsserted(() -> assertTrue(client.run()));
+        assertTrue(client.run());
 
         DefaultExecuteResultHandler resultHandler = new DefaultExecuteResultHandler();
         cli.networkDelay(".*hazelcast[_]{1}[1,3]{1}.*", resultHandler);
 
-        with().pollInterval(1, SECONDS).await().atMost(CLUSTER_WAIT, SECONDS)
+        with().pollDelay(OPERATION_WAIT, SECONDS)
+                .pollInterval(1, SECONDS)
+                .await()
+                .atMost(CLUSTER_WAIT, SECONDS)
                 .untilAsserted(() -> assertTrue(client.sanity(expectedClusterSize)));
 
         resultHandler.waitFor();
         assertTrue(resultHandler.getExitValue() == 0);
 
-        with().pollInterval(1, TimeUnit.SECONDS).await().atMost(5, SECONDS)
-                .untilAsserted(() -> assertNotNull(client.snapshot()));
-
         QuorumStatistics statistics = client.snapshot();
+        assertNotNull(statistics);
 
         logger.info("Statistics {}", statistics);
         if (statistics.getFailures() != 0 ||
@@ -188,6 +186,7 @@ public class AcceptanceTest {
             cli.logs();
         }
         assertTrue(statistics.getQuorumExceptions() == 0);
+        assertTrue(statistics.getSuccess() != 0);
     }
 
     /**
@@ -202,19 +201,18 @@ public class AcceptanceTest {
         with().pollInterval(1, SECONDS).await().atMost(CLUSTER_WAIT, SECONDS)
                 .untilAsserted(() -> assertTrue(client.sanity(initialClusterSize)));
 
-        with().pollInterval(1, SECONDS).await().atMost(OPERATION_WAIT, SECONDS)
-                .untilAsserted(() -> assertTrue(client.run()));
-
+        assertTrue(client.run());
         cli.networkDisconnect("shared", "hz-3");
         cli.networkDisconnect("shared", "hz-4");
 
-        with().pollDelay(5, SECONDS).pollInterval(1, SECONDS).await().atMost(CLUSTER_WAIT, SECONDS)
+        with().pollDelay(OPERATION_WAIT, SECONDS)
+                .pollInterval(1, SECONDS)
+                .await()
+                .atMost(CLUSTER_WAIT, SECONDS)
                 .untilAsserted(() -> assertTrue(client.sanity(expectedHealthySize)));
 
-        with().pollInterval(1, TimeUnit.SECONDS).await().atMost(OPERATION_WAIT, SECONDS)
-                .untilAsserted(() -> assertNotNull(client.snapshot()));
-
         QuorumStatistics statistics = client.snapshot();
+        assertNotNull(statistics);
 
         logger.info("Statistics {}", statistics);
         if (statistics.getFailures() != 0) {
@@ -222,10 +220,11 @@ public class AcceptanceTest {
         }
 
         assertTrue(statistics.getQuorumExceptions() == 0);
+        assertTrue(statistics.getSuccess() != 0);
     }
 
     @Test
-    public void quorumExceptionWhenMembersNetworkRemoved() throws IOException {
+    public void quorumExceptionWhenMembersNetworkRemoved() throws IOException, InterruptedException {
         final int initialClusterSize = 5;
         final int expectedUnhealthySize = 2;
 
@@ -233,9 +232,7 @@ public class AcceptanceTest {
         with().pollInterval(1, SECONDS).await().atMost(CLUSTER_WAIT, SECONDS)
                 .untilAsserted(() -> assertTrue(client.sanity(initialClusterSize)));
 
-        with().pollInterval(1, SECONDS).await().atMost(OPERATION_WAIT, SECONDS)
-                .untilAsserted(() -> assertTrue(client.run()));
-
+        assertTrue(client.run());
         cli.networkDisconnect("shared", "hz-0");
         cli.networkDisconnect("shared", "hz-1");
         cli.networkDisconnect("shared", "hz-2");
@@ -243,12 +240,16 @@ public class AcceptanceTest {
         with().pollInterval(1, SECONDS).await().atMost(CLUSTER_WAIT, SECONDS)
                 .untilAsserted(() -> assertTrue(client.sanity(expectedUnhealthySize)));
 
-        with().pollDelay(5, SECONDS).pollInterval(1, TimeUnit.SECONDS).await().atMost(10, SECONDS)
-                .untilAsserted(() -> assertNotNull(client.snapshot()));
+        //reset statistics
+        assertTrue(client.run());
+        //let it run with fresh statistics
+        TimeUnit.SECONDS.sleep(OPERATION_WAIT);
 
         QuorumStatistics statistics = client.snapshot();
+        assertNotNull(statistics);
 
         logger.info("Statistics {}", statistics);
         assertTrue(statistics.getQuorumExceptions() != 0);
+        assertTrue(statistics.getSuccess() == 0);
     }
 }

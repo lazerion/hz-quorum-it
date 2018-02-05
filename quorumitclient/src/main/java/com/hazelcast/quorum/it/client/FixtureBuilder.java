@@ -4,9 +4,11 @@ package com.hazelcast.quorum.it.client;
 import com.hazelcast.cardinality.CardinalityEstimator;
 import com.hazelcast.core.*;
 import com.hazelcast.durableexecutor.DurableExecutorService;
+import com.hazelcast.durableexecutor.DurableExecutorServiceFuture;
 import com.hazelcast.quorum.it.EchoTask;
 import com.hazelcast.ringbuffer.Ringbuffer;
 import com.hazelcast.scheduledexecutor.IScheduledExecutorService;
+import com.hazelcast.scheduledexecutor.IScheduledFuture;
 import com.hazelcast.transaction.TransactionContext;
 import com.hazelcast.transaction.TransactionException;
 import com.hazelcast.transaction.TransactionOptions;
@@ -17,6 +19,8 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -314,7 +318,12 @@ final class FixtureBuilder {
         return QuorumTask.builder()
                 .write(it -> {
                     EchoTask task = new EchoTask(it);
-                    service.submit(task);
+                    Future response = service.submit(task);
+                    try {
+                        response.get();
+                    } catch (InterruptedException | ExecutionException e) {
+                        throw new RuntimeException(e);
+                    }
                     return true;
                 })
                 .test(it -> !service.isTerminated())
@@ -329,7 +338,12 @@ final class FixtureBuilder {
         return QuorumTask.builder()
                 .write(it -> {
                     EchoTask task = new EchoTask(it);
-                    service.submit(task);
+                    DurableExecutorServiceFuture response = service.submit(task);
+                    try {
+                        response.get();
+                    } catch (InterruptedException | ExecutionException e) {
+                        throw new RuntimeException(e);
+                    }
                     return true;
                 })
                 .test(it -> !service.isTerminated())
@@ -344,7 +358,12 @@ final class FixtureBuilder {
         return QuorumTask.builder()
                 .write(it -> {
                     EchoTask task = new EchoTask(it);
-                    service.schedule(task, 1, TimeUnit.MILLISECONDS);
+                    IScheduledFuture response = service.schedule(task, 1, TimeUnit.MILLISECONDS);
+                    try {
+                        response.get();
+                    } catch (InterruptedException | ExecutionException e) {
+                        throw new RuntimeException(e);
+                    }
                     return true;
                 })
                 .test(it -> true)
