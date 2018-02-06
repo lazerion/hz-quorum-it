@@ -249,7 +249,12 @@ public class AcceptanceTest {
         assertNotNull(statistics);
 
         logger.info("Statistics {}", statistics);
+        if (statistics.getFailures() != 0 ||
+                statistics.getExceptions() != 0) {
+            cli.logs();
+        }
         assertTrue(statistics.getQuorumExceptions() != 0);
+        // fails sporadically !
         assertTrue(statistics.getSuccess() == 0);
     }
 }

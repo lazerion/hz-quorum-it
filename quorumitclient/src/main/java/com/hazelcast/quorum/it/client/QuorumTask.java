@@ -55,14 +55,19 @@ public class QuorumTask implements Callable<Void> {
                 }
 
             } catch (QuorumException e) {
-                logger.error("Quorum exception during operation {}", e.getMessage(), e);
+                logger.error("QuorumException during operation {}", e.getMessage(), e);
                 statistics.getQuorumExceptions().incrementAndGet();
             } catch (Exception e) {
                 if (StringUtils.containsIgnoreCase(e.getMessage(), "InterruptedException")) {
                     return null;
                 }
-                logger.error("Exception during operation {}", e.getMessage(), e);
-                statistics.getExceptions().incrementAndGet();
+                if (StringUtils.containsIgnoreCase(e.getMessage(), "QuorumException")) {
+                    logger.error("QuorumException during operation {}", e.getMessage(), e);
+                    statistics.getQuorumExceptions().incrementAndGet();
+                } else {
+                    logger.error("Exception during operation {}", e.getMessage(), e);
+                    statistics.getExceptions().incrementAndGet();
+                }
             }
 
             try {

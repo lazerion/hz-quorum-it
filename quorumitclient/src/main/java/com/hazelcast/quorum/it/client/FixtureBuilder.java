@@ -132,13 +132,8 @@ final class FixtureBuilder {
         final IAtomicReference<String> atomicReference = client.getAtomicReference("default");
         return QuorumTask.builder()
                 .write(it -> {
-                    try {
-                        atomicReference.set(it);
-                        return true;
-                    } catch (Exception ex) {
-                        logger.error(ex.getMessage());
-                        return false;
-                    }
+                    atomicReference.set(it);
+                    return true;
                 })
                 .test(it -> !atomicReference.isNull())
                 .read(it -> StringUtils.isNotBlank(atomicReference.get()))
@@ -149,12 +144,8 @@ final class FixtureBuilder {
         final CardinalityEstimator cardinalityEstimator = client.getCardinalityEstimator("default");
         return QuorumTask.builder()
                 .write(it -> {
-                    try {
-                        cardinalityEstimator.add(it);
-                        return true;
-                    } catch (Exception ex) {
-                        return false;
-                    }
+                    cardinalityEstimator.add(it);
+                    return true;
                 })
                 .read(it -> {
                     long estimate = cardinalityEstimator.estimate();
